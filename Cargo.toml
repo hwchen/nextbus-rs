@@ -1,9 +1,9 @@
 [package]
-name = "nextbus"
-version = "0.1.0"
 authors = ["Walther Chen <walther.chen@gmail.com>"]
 description = "Rust API for interacting with NextBus API"
+name = "nextbus"
+version = "0.1.0"
 
 [dependencies]
-hyper="0.6.16"
-kuchiki="0.1.0"
+hyper = "0.6.16"
+kuchiki = "0.1.0"

@@ -1,9 +1,9 @@
 //! Module for building up Next Bus URL from components
 //!
-//! Builder pattern is used to create a NextBusUrl
-//! from NextBusUrlBuilder
+//! Builder pattern is used to create a Request
+//! from RequestBuilder
 //!
-//! The NextBusUrl is guaranteed to be valid!
+//! The Request is guaranteed to be valid!
 //!
 //! ## Components
 //! - Command
@@ -18,147 +18,19 @@
 // TODO: Change API to get rid of add_route and add_stop,
 // just use route and stop, and always append instead of replace?
 
+use hyper::client::Client;
+use hyper::client::response::Response;
 use hyper::Url;
 use std::fmt;
 use error::Error;
-
-// Can this be done without String?
-#[derive(Debug, PartialEq)]
-pub struct Request {
-    url: NextBusUrl,
-    xml_response: Option<String>,
-}
-
-impl Request {
-    // Can only be built through RequestBuilder
-
-    pub fn get(&mut self) {
-    }
-}
-
-// Request Builder
-
-#[derive(Debug, PartialEq)]
-pub struct RequestBuilder<'a> {
-    command: Option<Command>,
-    agency: Option<&'a str>,
-    routes: Option<Vec<&'a str>>,
-    stops:Option< Vec<&'a str>>,
-    time: Option<usize>,
-}
-
-/// Build a Next Bus Request!
-/// Last invocation of each method is the
-/// one that "sticks"
-// TODO: pass args as reference?
-impl<'a> RequestBuilder<'a> {
-    pub fn new() -> Self {
-        RequestBuilder {
-            command: None,
-            agency: None,
-            routes: None,
-            stops: None,
-            time: None,
-        }
-    }
-
-    /// Command for Next Bus. Last invocation is the one that
-    /// will be built.
-    pub fn command(&mut self, command: Command) -> &mut Self {
-        self.command = Some(command);
-        self
-    }
-
-    /// Chose an agency. Last invocation is the one that will be
-    /// built.
-    pub fn agency(&mut self, agency: &'a str) -> &mut Self {
-        self.agency = Some(agency);
-        self
-    }
-
-    /// Chose a route. Last invocation is the one that will be
-    /// built.
-    pub fn route(&mut self, route: &'a str) -> &mut Self {
-        self.routes = Some(vec![route]);
-        self
-    }
-
-    /// Append a route. Last invocation is the one that will be
-    /// built.
-    pub fn add_route(&mut self, route: &'a str) -> &mut Self {
-        //TODO: Better way to initialize?
-        if self.routes.is_none() { self.routes = Some(vec![]); }
-        self.routes.as_mut().map(|routes| routes.push(route));
-        self
-    }
-
-    /// Chose a list of routes. Reaplces any and all previous
-    /// routes in the list
-    pub fn routes(&mut self, routes: Vec<&'a str>) -> &mut Self {
-        self.routes = Some(routes);
-        self
-    }
-
-    /// Append a list of routes to the current list of routes
-    pub fn append_routes(&mut self, mut routes: Vec<&'a str>) -> &mut Self {
-        self.routes.as_mut().map(|mut current_routes| {
-            Vec::append(&mut current_routes, &mut routes);
-        });
-        self
-    }
-
-    /// Chose a stop. Last invocation is the one that will be
-    /// built. Replaces any and all previous stops in the list.
-    pub fn stop(&mut self, stop: &'a str) -> &mut Self {
-        self.stops = Some(vec![stop]);
-        self
-    }
-
-    /// Append a stop to the current list of stops.
-    pub fn add_stop(&mut self, stop: &'a str) -> &mut Self {
-        //TODO: Better way to initialize?
-        if self.stops.is_none() {self.stops = Some(vec![]); }
-        self.stops.as_mut().map(|stops| stops.push(stop));
-        self
-    }
-
-    /// Chose a list of stops. Replaces any and all previous
-    /// stops in the list.
-    pub fn stops(&mut self, stops: Vec<&'a str>) -> &mut Self {
-        self.stops = Some(stops);
-        self
-    }
-
-    /// Append a list of stops to the current list of stops.
-    // Not entirely clear why this can't be &mut in fn defn
-    pub fn append_stops(&mut self, mut stops: Vec<&'a str>) -> &mut Self {
-        self.stops.as_mut().map(|mut current_stops| {
-            Vec::append(&mut current_stops, &mut stops);
-        });
-        self
-    }
-
-    /// Chose a time. Replaces previous any previous time.
-    pub fn time(&mut self, time: usize) -> &mut Self {
-        self.time = Some(time);
-        self
-    }
-
-    pub fn create_request(&self) -> ::Result<Request> {
-        Ok(Request {
-            url: try!(NextBusUrl::new(&self)),
-            xml_response: None,
-        })
-    }
-}
 
 /// A valid next bus url and query
 /// Verified on building (dynamic). Because tuple struct constructors
 /// with private fields cannot be invoked.
 #[derive(Debug, PartialEq)]
-pub struct NextBusUrl(Url);
+pub struct Request(Url);
 
-impl NextBusUrl {
+impl Request {
     pub fn new(builder: &RequestBuilder) -> ::Result<Self> {
         // Check for invalid query combinations
 
@@ -287,7 +159,127 @@ impl NextBusUrl {
         let mut url = Url::parse(NEXTBUS_URL).unwrap();
         url.set_query_from_pairs(queries);
 
-        Ok(NextBusUrl(url))
+        Ok(Request(url))
+    }
+
+    pub fn send(self) -> ::Result<Response> {
+        let client = Client::new();
+        let Request(url) = self;
+        let res = try!(client.get(url).send());
+        Ok(res)
+    }
+}
+
+// Request Builder
+
+#[derive(Debug, PartialEq)]
+pub struct RequestBuilder<'a> {
+    command: Option<Command>,
+    agency: Option<&'a str>,
+    routes: Option<Vec<&'a str>>,
+    stops:Option< Vec<&'a str>>,
+    time: Option<usize>,
+}
+
+/// Build a Next Bus Request!
+/// Last invocation of each method is the
+/// one that "sticks"
+// TODO: pass args as reference?
+impl<'a> RequestBuilder<'a> {
+    pub fn new() -> Self {
+        RequestBuilder {
+            command: None,
+            agency: None,
+            routes: None,
+            stops: None,
+            time: None,
+        }
+    }
+
+    /// Command for Next Bus. Last invocation is the one that
+    /// will be built.
+    pub fn command(&mut self, command: Command) -> &mut Self {
+        self.command = Some(command);
+        self
+    }
+
+    /// Chose an agency. Last invocation is the one that will be
+    /// built.
+    pub fn agency(&mut self, agency: &'a str) -> &mut Self {
+        self.agency = Some(agency);
+        self
+    }
+
+    /// Chose a route. Last invocation is the one that will be
+    /// built.
+    pub fn route(&mut self, route: &'a str) -> &mut Self {
+        self.routes = Some(vec![route]);
+        self
+    }
+
+    /// Append a route. Last invocation is the one that will be
+    /// built.
+    pub fn add_route(&mut self, route: &'a str) -> &mut Self {
+        //TODO: Better way to initialize?
+        if self.routes.is_none() { self.routes = Some(vec![]); }
+        self.routes.as_mut().map(|routes| routes.push(route));
+        self
+    }
+
+    /// Chose a list of routes. Reaplces any and all previous
+    /// routes in the list
+    pub fn routes(&mut self, routes: Vec<&'a str>) -> &mut Self {
+        self.routes = Some(routes);
+        self
+    }
+
+    /// Append a list of routes to the current list of routes
+    pub fn append_routes(&mut self, mut routes: Vec<&'a str>) -> &mut Self {
+        self.routes.as_mut().map(|mut current_routes| {
+            Vec::append(&mut current_routes, &mut routes);
+        });
+        self
+    }
+
+    /// Chose a stop. Last invocation is the one that will be
+    /// built. Replaces any and all previous stops in the list.
+    pub fn stop(&mut self, stop: &'a str) -> &mut Self {
+        self.stops = Some(vec![stop]);
+        self
+    }
+
+    /// Append a stop to the current list of stops.
+    pub fn add_stop(&mut self, stop: &'a str) -> &mut Self {
+        //TODO: Better way to initialize?
+        if self.stops.is_none() {self.stops = Some(vec![]); }
+        self.stops.as_mut().map(|stops| stops.push(stop));
+        self
+    }
+
+    /// Chose a list of stops. Replaces any and all previous
+    /// stops in the list.
+    pub fn stops(&mut self, stops: Vec<&'a str>) -> &mut Self {
+        self.stops = Some(stops);
+        self
+    }
+
+    /// Append a list of stops to the current list of stops.
+    // Not entirely clear why this can't be &mut in fn defn
+    pub fn append_stops(&mut self, mut stops: Vec<&'a str>) -> &mut Self {
+        self.stops.as_mut().map(|mut current_stops| {
+            Vec::append(&mut current_stops, &mut stops);
+        });
+        self
+    }
+
+    /// Chose a time. Replaces previous any previous time.
+    pub fn time(&mut self, time: usize) -> &mut Self {
+        self.time = Some(time);
+        self
+    }
+
+    pub fn create_request(&self) -> ::Result<Request> {
+        Request::new(&self)
     }
 }
 
@@ -324,6 +316,7 @@ impl fmt::Display for Command {
 
 #[cfg(test)]
 mod test {
+    use std::io::Read;
     use super::*;
     use hyper::Url;
 
@@ -336,8 +329,8 @@ mod test {
             .create_request()
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?command=agencyList";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -350,8 +343,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeList&a=test_agency";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -365,8 +358,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeConfig&a=test_agency&r=one";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
 
         // for many routes
         let built_request = RequestBuilder::new()
@@ -376,8 +369,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeConfig&a=test_agency";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -392,8 +385,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictions&a=test_agency&r=one&s=stop_1";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -409,8 +402,8 @@ mod test {
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictionsForMultiStops&a=test_agency\
                    &stops=stop_1&stops=stop_2";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
 
         // using add_stop first
         let built_request = RequestBuilder::new()
@@ -423,8 +416,8 @@ mod test {
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictionsForMultiStops&a=test_agency\
                    &stops=stop_1&stops=stop_2";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -438,8 +431,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=schedule&a=test_agency&r=one";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -453,8 +446,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=messages&a=test_agency&r=one";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
 
         // multiple routes
         let built_request = RequestBuilder::new()
@@ -466,8 +459,8 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=messages&a=test_agency&r=one&r=two";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
     }
 
     #[test]
@@ -482,7 +475,22 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=vehicleLocations&a=test_agency&r=one&t=0";
-        let parsed_url = NextBusUrl(Url::parse(url).unwrap());
-        assert_eq!(built_request.url, parsed_url);
+        let parsed_url = Request(Url::parse(url).unwrap());
+        assert_eq!(built_request, parsed_url);
+    }
+
+    #[test]
+    fn gets_agency_list() {
+        let request = RequestBuilder::new()
+            .command(Command::AgencyList)
+            .create_request()
+            .unwrap();
+        let mut res = request.send().unwrap();
+        let mut body = String::new();
+        res.read_to_string(&mut body).unwrap();
+        println!("{:?}", res);
+        println!("\n");
+        println!("{:?}", body);
+        assert!(false);
     }
 }
