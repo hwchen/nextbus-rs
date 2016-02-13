@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! # Nekobasu!
 //! Rust API for NextBus API
 //!
@@ -38,11 +39,5 @@ pub mod error;
 pub mod request;
 pub mod agency;
 pub mod route;
-mod nextbus_url;
 
-#[cfg(test)]
-mod test {
-    #[test]
-    fn it_works() {
-    }
-}
+pub use error::{Error, Result};
