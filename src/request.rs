@@ -18,6 +18,7 @@
 // TODO: Change API to get rid of add_route and add_stop,
 // just use route and stop, and always append instead of replace?
 
+use nb::NEXTBUS_URL;
 use hyper::client::Client;
 use hyper::client::response::Response;
 use hyper::Url;
@@ -285,8 +286,6 @@ impl<'a> RequestBuilder<'a> {
 
 // Components for building the NextBus Url
 
-const NEXTBUS_URL: &'static str = "http://webservices.nextbus.com/service/publicXMLFeed";
-
 #[derive(Debug, PartialEq)]
 pub enum Command {
     AgencyList,
@@ -480,6 +479,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn gets_agency_list() {
         let request = RequestBuilder::new()
             .command(Command::AgencyList)

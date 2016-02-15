@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-//! # Nekobasu!
+//! NextBus
 //! Rust API for NextBus API
 //!
 //! This library makes calls to the NextBus API, then parses
@@ -35,9 +35,11 @@
 extern crate hyper;
 extern crate kuchiki;
 
-pub mod error;
-pub mod request;
 pub mod agency;
+mod error;
+mod nb;
+mod request;
 pub mod route;
 
 pub use error::{Error, Result};
+pub use request::{Request, RequestBuilder};
