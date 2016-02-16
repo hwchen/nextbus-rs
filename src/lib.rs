@@ -42,4 +42,4 @@ mod request;
 pub mod route;
 
 pub use error::{Error, Result};
-pub use request::{Request, RequestBuilder};
+pub use request::{Request};

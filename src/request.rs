@@ -1,7 +1,6 @@
 //! Module for building up Next Bus URL from components
 //!
 //! Builder pattern is used to create a Request
-//! from RequestBuilder
 //!
 //! The Request is guaranteed to be valid!
 //!
@@ -29,10 +28,10 @@ use error::Error;
 /// Verified on building (dynamic). Because tuple struct constructors
 /// with private fields cannot be invoked.
 #[derive(Debug, PartialEq)]
-pub struct Request(Url);
+pub struct NextBusApiCall(Url);
 
-impl Request {
-    pub fn new(builder: &RequestBuilder) -> ::Result<Self> {
+impl NextBusApiCall {
+    pub fn new(builder: &Request) -> ::Result<Self> {
         // Check for invalid query combinations
 
         match builder.command {
@@ -160,12 +159,12 @@ impl Request {
         let mut url = Url::parse(NEXTBUS_URL).unwrap();
         url.set_query_from_pairs(queries);
 
-        Ok(Request(url))
+        Ok(NextBusApiCall(url))
     }
 
     pub fn send(self) -> ::Result<Response> {
         let client = Client::new();
-        let Request(url) = self;
+        let NextBusApiCall(url) = self;
         let res = try!(client.get(url).send());
         Ok(res)
     }
@@ -174,7 +173,7 @@ impl Request {
 // Request Builder
 
 #[derive(Debug, PartialEq)]
-pub struct RequestBuilder<'a> {
+pub struct Request<'a> {
     command: Option<Command>,
     agency: Option<&'a str>,
     routes: Option<Vec<&'a str>>,
@@ -186,9 +185,9 @@ pub struct RequestBuilder<'a> {
 /// Last invocation of each method is the
 /// one that "sticks"
 // TODO: pass args as reference?
-impl<'a> RequestBuilder<'a> {
+impl<'a> Request<'a> {
     pub fn new() -> Self {
-        RequestBuilder {
+        Request {
             command: None,
             agency: None,
             routes: None,
@@ -279,8 +278,8 @@ impl<'a> RequestBuilder<'a> {
         self
     }
 
-    pub fn create_request(&self) -> ::Result<Request> {
-        Request::new(&self)
+    pub fn create_request(&self) -> ::Result<NextBusApiCall> {
+        NextBusApiCall::new(&self)
     }
 }
 
@@ -323,33 +322,33 @@ mod test {
     // tuple constructor works inside module, but not outside
     fn builds_agency_list() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::AgencyList)
             .create_request()
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?command=agencyList";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_routes_list() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::RouteList)
             .agency("test_agency")
             .create_request()
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeList&a=test_agency";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_route_config() {
         // for one route
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::RouteConfig)
             .agency("test_agency")
             .route("one")
@@ -357,25 +356,25 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeConfig&a=test_agency&r=one";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
 
         // for many routes
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::RouteConfig)
             .agency("test_agency")
             .create_request()
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=routeConfig&a=test_agency";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_predictions() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::Predictions)
             .agency("test_agency")
             .route("one")
@@ -384,14 +383,14 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictions&a=test_agency&r=one&s=stop_1";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_predictions_for_multi_stops() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::PredictionsForMultiStops)
             .agency("test_agency")
             .stop("stop_1")
@@ -401,11 +400,11 @@ mod test {
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictionsForMultiStops&a=test_agency\
                    &stops=stop_1&stops=stop_2";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
 
         // using add_stop first
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::PredictionsForMultiStops)
             .agency("test_agency")
             .add_stop("stop_1")
@@ -415,14 +414,14 @@ mod test {
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=predictionsForMultiStops&a=test_agency\
                    &stops=stop_1&stops=stop_2";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_schedule() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::Schedule)
             .agency("test_agency")
             .route("one")
@@ -430,14 +429,14 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=schedule&a=test_agency&r=one";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_messages() {
         //normal, one route
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::Messages)
             .agency("test_agency")
             .route("one")
@@ -445,11 +444,11 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=messages&a=test_agency&r=one";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
 
         // multiple routes
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::Messages)
             .agency("test_agency")
             .route("one")
@@ -458,14 +457,14 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=messages&a=test_agency&r=one&r=two";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     fn builds_vehicle_locations() {
         //normal
-        let built_request = RequestBuilder::new()
+        let built_request = Request::new()
             .command(Command::VehicleLocations)
             .agency("test_agency")
             .route("one")
@@ -474,14 +473,14 @@ mod test {
             .unwrap();
         let url = "http://webservices.nextbus.com/service/publicXMLFeed?\
                    command=vehicleLocations&a=test_agency&r=one&t=0";
-        let parsed_url = Request(Url::parse(url).unwrap());
+        let parsed_url = NextBusApiCall(Url::parse(url).unwrap());
         assert_eq!(built_request, parsed_url);
     }
 
     #[test]
     #[ignore]
     fn gets_agency_list() {
-        let request = RequestBuilder::new()
+        let request = Request::new()
             .command(Command::AgencyList)
             .create_request()
             .unwrap();
