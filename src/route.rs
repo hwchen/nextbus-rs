@@ -1,60 +1,41 @@
 //! Module for handling route functions
 
-use std::collections::HashMap;
-
-/// Entry point for working with Routes
+/// List of routes. Maps directly from Nextbus response.
+/// Contains vec of stub information for each route.
 #[derive(Debug)]
-pub struct Route<'a> {
-    tag: &'a str,
-    title: &'a str,
-    color: &'a str, // should be valid color?
-    opposite_color: &'a str,
-    lat_min: f32,
-    lat_max: f32,
-    lon_min: f32,
-    lon_max: f32,
-    directions: Vec<Direction<'a>>,
-    paths: Vec<Path>,
-    // all stops is a hash map of all stops in the route
-    // with relationship stop_tag: Stop for easy lookup
-    all_stops: HashMap<&'a str, Stop<'a>>,
-}
+pub struct RouteList(Vec<RouteStub>);
 
 /// Used for parsing RouteList Nextbus response.
 /// Contains a stub of route data.
 #[derive(Debug)]
-pub struct RouteStub<'a> {
-    tag: &'a str,
-    title: &'a str,
+pub struct RouteStub {
+    tag: String,
+    title: String,
 }
 
-/// List of routes. Maps directly from Nextbus response.
-/// Contains vec of stub information for each route.
-#[derive(Debug)]
-pub struct RouteList<'a>(Vec<RouteStub<'a>>);
-
+// Put routeconfig here
 /// A stop along a Route
 #[derive(Debug)]
-pub struct Stop<'a> {
-    tag: &'a str,
-    title: &'a str,
-    lat: f32,
-    long: f32,
-    stop_id: &'a str,
+pub struct Stop {
+    tag: String,
+    title: String,
+    lat: String,
+    long: String,
+    stop_id: String,
 }
 
 /// An itinerary along a route
 #[derive(Debug)]
-pub struct Direction<'a> {
-    tag: &'a str,
-    title: &'a str,
-    name: &'a str,
+pub struct Direction {
+    tag: String,
+    title: String,
+    name: String,
     use_for_ui: bool,
     // stops is an ordered vector of stop tags
     // References are kept because stops will
     // be referenced many times among the many
     // directions
-    stops: Vec<&'a str>,
+    stops: Vec<String>,
 }
 
 /// The coordinates tracing a Route
@@ -69,3 +50,24 @@ pub struct Point {
 }
 
 // Add prediction, schedule, messages, and vehicle locations
+
+
+// To complicated?
+///// Entry point for working with Routes
+//#[derive(Debug)]
+//pub struct Route {
+//    tag: String,
+//    title: String,
+//    color: String, // should be valid color?
+//    opposite_color: String,
+//    lat_min: f32,
+//    lat_max: f32,
+//    lon_min: f32,
+//    lon_max: f32,
+//    directions: Vec<Direction>,
+//    paths: Vec<Path>,
+//    // all stops is a hash map of all stops in the route
+//    // with relationship stop_tag: Stop for easy lookup
+//    all_stops: HashMap<String, Stop>,
+//}
+

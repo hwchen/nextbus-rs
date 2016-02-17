@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+
 //! NextBus
 //! Rust API for NextBus API
 //!
@@ -42,4 +43,4 @@ mod request;
 pub mod route;
 
 pub use error::{Error, Result};
-pub use request::{Request};
+pub use request::{Request, Command};
