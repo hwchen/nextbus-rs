@@ -1,5 +1,20 @@
+//! Next Bus Route List Command
+//!
 
-// To complicated?
+use request::{Command, Request};
+use ::Error;
+use kuchiki;
+use kuchiki::traits::*;
+use std::io::Read;
+
+pub struct RouteConfig(Vec<Route>);
+
+impl RouteConfig {
+    pub fn new(routes: Vec<Route>) -> Self {
+        RouteList(routes)
+    }
+}
+
 ///// Entry point for working with Routes
 //#[derive(Debug)]
 //pub struct Route {

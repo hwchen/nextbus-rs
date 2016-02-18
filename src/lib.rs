@@ -11,6 +11,8 @@
 // build inline. But don't have to do this until later.
 //
 // TODO: Review .select() in kuchiki?
+//
+// TODO: Remove BuildUrlError?
 
 //! NextBus
 //! Rust API for NextBus API
@@ -51,7 +53,6 @@ mod request;
 use api::agency_list::AgencyListBuilder;
 use api::route_list::RouteListBuilder;
 pub use error::{Error, Result};
-pub use request::{Request, Command};
 
 pub struct NextBus;
 

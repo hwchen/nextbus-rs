@@ -1,6 +1,6 @@
 //! Module for handling agency functions
 
-use ::{Command, Request};
+use request::{Command, Request};
 use kuchiki;
 use kuchiki::traits::*;
 use std::io::Read;

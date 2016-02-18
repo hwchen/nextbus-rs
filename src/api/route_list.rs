@@ -1,7 +1,7 @@
 //! Next Bus Route List Command
 //!
 
-use ::{Command, Request};
+use request::{Command, Request};
 use ::Error;
 use kuchiki;
 use kuchiki::traits::*;
@@ -34,20 +34,27 @@ impl<'a> RouteListBuilder<'a> {
     }
 
     pub fn get(&self) -> ::Result<RouteList> {
+        // Check if agency is none. If so, send error.
         let agency = try!(self.agency.ok_or(Error::BuildCommandError));
 
+        // Request and get back
         let mut res = try!(Request::new()
             .command(Command::RouteList)
             .agency(agency)
             .send());
         let mut body = String::new();
         res.read_to_string(&mut body).unwrap();
-        println!("{}", body);
         let xml = kuchiki::parse_html().one(body);
+
+        // Vec for collecting routes
         let mut routes = vec![];
+
+        // Select route elements, iter over the matches?
         for routes_xml in xml.descendants().select("route") {
+            // for each match, iterate over each route
             for route in routes_xml {
 
+                // Create Route and collect
                 routes.push(Route{
                     tag: route.attributes.borrow()
                         .get("tag").map(|s| s.to_owned()).unwrap(),
@@ -62,7 +69,6 @@ impl<'a> RouteListBuilder<'a> {
 }
 
 /// Used for parsing RouteList Nextbus response.
-/// Contains a stub of route data.
 #[derive(Debug)]
 pub struct Route {
     tag: String,
