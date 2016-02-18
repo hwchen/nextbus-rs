@@ -10,6 +10,7 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
+    BuildCommandError,
     BuildUrlError,
     HttpError(HyperError),
 }
@@ -17,6 +18,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::BuildCommandError => write!(f, "Error Building Command"),
             Error::BuildUrlError => write!(f, "Error Building Url"),
             Error::HttpError(ref err) => write!(f, "HTTP Error: {}", err),
         }
@@ -26,6 +28,7 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
+            Error::BuildCommandError => "Error Building Command",
             Error::BuildUrlError => "Error Building Url",
             Error::HttpError(ref err) => err.description(),
         }

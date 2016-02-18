@@ -34,7 +34,7 @@ impl<'a> RouteListBuilder<'a> {
     }
 
     pub fn get(&self) -> ::Result<RouteList> {
-        let agency = try!(self.agency.ok_or(Error::BuildUrlError));
+        let agency = try!(self.agency.ok_or(Error::BuildCommandError));
 
         let mut res = try!(Request::new()
             .command(Command::RouteList)

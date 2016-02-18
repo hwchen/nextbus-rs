@@ -1,4 +1,16 @@
 #![allow(dead_code)]
+// TODO: Definitely take out verfication from url builder. It no longer needs it,
+// since building is already constrained by individual builders.
+//
+// TODO: Make decisions about below after building routeConfig.
+//
+// TODO: Maybe move http request out of request, turn it into just a url builder.
+// Because I don't want I/O hiding below.
+//
+// TODO: Maybe take out builder methods later from url builder, and just
+// build inline. But don't have to do this until later.
+//
+// TODO: Review .select() in kuchiki?
 
 //! NextBus
 //! Rust API for NextBus API

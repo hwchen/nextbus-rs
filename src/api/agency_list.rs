@@ -6,8 +6,7 @@ use kuchiki::traits::*;
 use std::io::Read;
 
 /// List of Agencies. Maps directly from Nextbus
-/// response. Contains vec of stub information
-/// for each route.
+/// response. Contains vec of routes.
 #[derive(Debug)]
 pub struct AgencyList(Vec<Agency>);
 
@@ -17,7 +16,9 @@ impl AgencyList {
     }
 }
 
-// Empty, but provides a consistent interface
+/// Builds a request for AgencyList.
+/// Since there's no config, it's empty,
+/// but it's a consistent API with other commands.
 pub struct AgencyListBuilder;
 
 impl AgencyListBuilder {
@@ -26,18 +27,27 @@ impl AgencyListBuilder {
         AgencyListBuilder
     }
 
-    // Can't seem to do without allocations :(
     pub fn get(self) -> ::Result<AgencyList> {
+        // Make the request
         let mut res = try!(Request::new()
             .command(Command::AgencyList)
             .send());
+
+        // Getting output of request
         let mut body = String::new();
         res.read_to_string(&mut body).unwrap();
         let xml = kuchiki::parse_html().one(body);
+
+        // Vec for collecting agencies in the loop.
         let mut agencies = vec![];
+
+        // Select agency elements, which gives an iter of agencies?
+        // (Implies that there can be more than one set of matches)
         for agencies_xml in xml.descendants().select("agency") {
+            // For those matches, get the elements.
             for agency in agencies_xml {
 
+                // Get attributes and construct Agency and collect.
                 agencies.push(Agency{
                     tag: agency.attributes.borrow()
                         .get("tag").map(|s| s.to_owned()).unwrap(),

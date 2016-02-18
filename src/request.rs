@@ -22,7 +22,6 @@ use hyper::client::Client;
 use hyper::client::response::Response;
 use hyper::Url;
 use std::fmt;
-use error::Error;
 
 /// A valid next bus url and query
 /// Verified on building (dynamic). Because tuple struct constructors
@@ -141,99 +140,13 @@ impl<'a> Request<'a> {
         self
     }
 
-    /// Validate (private fn to be called from send())
-    fn validate(&self) -> ::Result<Url> {
-        // Check for invalid query combinations
+    pub fn build_url(&self) -> ::Result<Url> {
 
-        match self.command {
-            Some(Command::AgencyList) => {
-                if self.agency != None || self.routes != None ||
-                    self.stops != None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-            },
-            Some(Command::RouteList) => {
-                if self.agency == None || self.routes != None ||
-                    self.stops != None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-            },
-            // Can specify one or no routes
-            Some(Command::RouteConfig) => {
-                if self.agency == None ||
-                    self.stops != None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    if routes.len() > 1 { return Err(Error::BuildUrlError) }
-                }
-            },
-            Some(Command::Predictions) => {
-                if self.agency == None || self.routes == None ||
-                    self.stops == None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    if routes.len() != 1 { return Err(Error::BuildUrlError) }
-                }
-                if let Some(ref stops) = self.stops {
-                    if stops.len() != 1 { return Err(Error::BuildUrlError); }
-                }
-            },
-            // No routes allowed?
-            Some(Command::PredictionsForMultiStops) => {
-                if self.agency == None || self.routes != None ||
-                    self.stops == None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    // Shouldn't be able to happen, but double-check
-                    if routes.is_empty() { return Err(Error::BuildUrlError) }
-                }
-            },
-            Some(Command::Schedule) => {
-                if self.agency == None || self.routes == None ||
-                    self.stops != None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    if routes.len() != 1 { return Err(Error::BuildUrlError) }
-                }
-            },
-            Some(Command::Messages) => {
-                if self.agency == None || self.routes == None ||
-                    self.stops != None || self.time != None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    // Shouldn't be able to happen, but double-check
-                    if routes.is_empty() { return Err(Error::BuildUrlError) }
-                }
-            },
-            Some(Command::VehicleLocations) => {
-                if self.agency == None || self.routes == None ||
-                    self.stops != None || self.time == None {
-
-                    return Err(Error::BuildUrlError);
-                }
-                if let Some(ref routes) = self.routes {
-                    if routes.len() != 1 { return Err(Error::BuildUrlError) }
-                }
-            },
-            None => return Err(Error::BuildUrlError),
-        }
-
-        // Add queries. Correct combinations checked above,
-        // So all we have to do is not panic on a None here.
+        // build url query params
         let mut queries = vec![];
+
         queries.push(("command", self.command.as_ref().unwrap().to_string()));
+
         if self.agency.is_some() {
             queries.push(("a", self.agency.unwrap().to_owned()));
         }
@@ -273,17 +186,12 @@ impl<'a> Request<'a> {
         Ok(url)
     }
 
-    // TODO: Should this return the string of XML response?
-    // TODO: should take self, not &self
+    // TODO: should take self, not &self?
     pub fn send(&self) -> ::Result<Response> {
         let client = Client::new();
-        let url = try!(self.validate());
+        let url = try!(self.build_url());
         let res = try!(client.get(url).send());
         Ok(res)
-    }
-
-    pub fn get_url(&self) -> ::Result<Url> {
-        self.validate()
     }
 }
 
@@ -326,7 +234,7 @@ mod test {
     fn builds_agency_list() {
         let res_url = Request::new()
             .command(Command::AgencyList)
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed\
                              ?command=agencyList").unwrap();
@@ -338,7 +246,7 @@ mod test {
         let res_url = Request::new()
             .command(Command::RouteList)
             .agency("test_agency")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=routeList&a=test_agency").unwrap();
@@ -352,7 +260,7 @@ mod test {
             .command(Command::RouteConfig)
             .agency("test_agency")
             .route("one")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=routeConfig&a=test_agency&r=one").unwrap();
@@ -362,7 +270,7 @@ mod test {
         let res_url = Request::new()
             .command(Command::RouteConfig)
             .agency("test_agency")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=routeConfig&a=test_agency").unwrap();
@@ -376,7 +284,7 @@ mod test {
             .agency("test_agency")
             .route("one")
             .stop("stop_1")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=predictions&a=test_agency&r=one&s=stop_1").unwrap();
@@ -391,7 +299,7 @@ mod test {
             .agency("test_agency")
             .stop("stop_1")
             .add_stop("stop_2")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=predictionsForMultiStops&a=test_agency\
@@ -404,7 +312,7 @@ mod test {
             .agency("test_agency")
             .add_stop("stop_1")
             .add_stop("stop_2")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=predictionsForMultiStops&a=test_agency\
@@ -418,7 +326,7 @@ mod test {
             .command(Command::Schedule)
             .agency("test_agency")
             .route("one")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=schedule&a=test_agency&r=one").unwrap();
@@ -432,7 +340,7 @@ mod test {
             .command(Command::Messages)
             .agency("test_agency")
             .route("one")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=messages&a=test_agency&r=one").unwrap();
@@ -444,7 +352,7 @@ mod test {
             .agency("test_agency")
             .route("one")
             .add_route("two")
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=messages&a=test_agency&r=one&r=two").unwrap();
@@ -458,7 +366,7 @@ mod test {
             .agency("test_agency")
             .route("one")
             .time(0)
-            .get_url()
+            .build_url()
             .unwrap();
         let url = Url::parse("http://webservices.nextbus.com/service/publicXMLFeed?\
                              command=vehicleLocations&a=test_agency&r=one&t=0").unwrap();
