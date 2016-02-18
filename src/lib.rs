@@ -12,35 +12,73 @@
 //!
 //! ## Feature set
 //!
-//! - List and select agency
-//! - List and select route for an agency
-//! - For a route, get configuration (stops)
-//! - For a route, get predictions
-//! - For a route, get multi-stop predictions
-//! - for a route, get schedule
-//! - for a route, get messages
-//! - for a route, get vehicle locations
+//! - A convenient builder for an API request which returns a hyper Response.
+//! - A convenient builder for an API request which returns a
 //!
 //! ## Structure
 //!
-//! Should I map the API to functions, or use objects?
-//! Objects might allow for caching! I can have a refresh method too.
-//! But maybe the API should be straight calls, and worry about a caching
-//! layer separately? I could basically make a query builder and output parser.
+//! ### API calls
 //!
-//! For example, I would need the following structs: AgencyList, RouteList,
-//! RouteConfig, Prediction, PredictionMultiStop, Schedule, Message
-//!
-//! Then I could build caching layer on top of this.
+//! - AgencyList
+//! - RouteList
+//! - RouteConfig
+//! - Predictions
+//! - PredicionsForMultiStops
+//! - Schedule
+//! - Messages
+//! - VehicleLocations
 
 extern crate hyper;
 extern crate kuchiki;
 
-pub mod agency;
+mod api;
 mod error;
 mod nb;
 mod request;
-pub mod route;
 
+use api::agency_list::AgencyListBuilder;
+use api::route_list::RouteListBuilder;
 pub use error::{Error, Result};
 pub use request::{Request, Command};
+
+pub struct NextBus;
+
+impl<'a> NextBus {
+    pub fn new() -> Self {
+        NextBus
+    }
+
+    pub fn agency_list(self) -> AgencyListBuilder {
+        AgencyListBuilder::new()
+    }
+
+    pub fn route_list(self) -> RouteListBuilder<'a> {
+        RouteListBuilder::new()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn get_agency_list() {
+        let agencies = NextBus::new()
+            .agency_list()
+            .get()
+            .unwrap();
+        println!("{:?}", agencies);
+    }
+
+    #[test]
+    #[ignore]
+    fn get_route_list() {
+        let routes = NextBus::new()
+            .route_list()
+            .agency("mbta")
+            .get()
+            .unwrap();
+        println!("{:?}", routes);
+    }
+}
