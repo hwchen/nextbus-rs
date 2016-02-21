@@ -13,6 +13,7 @@ pub enum Error {
     BuildCommandError,
     BuildUrlError,
     HttpError(HyperError),
+    ParseError,
 }
 
 impl fmt::Display for Error {
@@ -21,6 +22,7 @@ impl fmt::Display for Error {
             Error::BuildCommandError => write!(f, "Error Building Command"),
             Error::BuildUrlError => write!(f, "Error Building Url"),
             Error::HttpError(ref err) => write!(f, "HTTP Error: {}", err),
+            Error::ParseError => write!(f, "Error Parsing XML"),
         }
     }
 }
@@ -31,6 +33,7 @@ impl error::Error for Error {
             Error::BuildCommandError => "Error Building Command",
             Error::BuildUrlError => "Error Building Url",
             Error::HttpError(ref err) => err.description(),
+            Error::ParseError => "Error Parsing XML",
         }
     }
 
