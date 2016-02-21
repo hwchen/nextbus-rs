@@ -1,8 +1,6 @@
 //! Module for handling agency functions
 
 use request::{Command, Request};
-use kuchiki;
-use kuchiki::traits::*;
 use std::io::Read;
 
 /// List of Agencies. Maps directly from Nextbus
@@ -36,33 +34,12 @@ impl AgencyListBuilder {
         // Getting output of request
         let mut body = String::new();
         res.read_to_string(&mut body).unwrap();
-        let xml = kuchiki::parse_html().one(body);
 
         // Vec for collecting agencies in the loop.
         let mut agencies = vec![];
 
-        // Select agency elements, which gives an iter of agencies?
-        // (Implies that there can be more than one set of matches)
-        for agencies_xml in xml.descendants().select("agency") {
-            // For those matches, get the elements.
-            for agency in agencies_xml {
+        //TODO: parse xml into struct
 
-                // Get attributes and construct Agency and collect.
-                agencies.push(Agency{
-                    tag: agency.attributes.borrow()
-                        .get("tag").map(|s| s.to_owned()).unwrap(),
-
-                    title: agency.attributes.borrow()
-                        .get("title").map(|s| s.to_owned()).unwrap(),
-
-                    short_title: agency.attributes.borrow()
-                        .get("shorttitle").map(|s| s.to_owned()),
-
-                    region_title: agency.attributes.borrow()
-                        .get("regiontitle").map(|s| s.to_owned()),
-                })
-            }
-        }
         Ok(AgencyList(agencies))
     }
 }

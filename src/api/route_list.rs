@@ -3,8 +3,6 @@
 
 use request::{Command, Request};
 use ::Error;
-use kuchiki;
-use kuchiki::traits::*;
 use std::io::Read;
 
 /// List of routes. Maps directly from Nextbus response.
@@ -44,26 +42,12 @@ impl<'a> RouteListBuilder<'a> {
             .send());
         let mut body = String::new();
         res.read_to_string(&mut body).unwrap();
-        let xml = kuchiki::parse_html().one(body);
 
         // Vec for collecting routes
         let mut routes = vec![];
 
-        // Select route elements, iter over the matches?
-        for routes_xml in xml.descendants().select("route") {
-            // for each match, iterate over each route
-            for route in routes_xml {
+        // TODO: parse the xml
 
-                // Create Route and collect
-                routes.push(Route{
-                    tag: route.attributes.borrow()
-                        .get("tag").map(|s| s.to_owned()).unwrap(),
-
-                    title: route.attributes.borrow()
-                        .get("title").map(|s| s.to_owned()).unwrap(),
-                })
-            }
-        }
         Ok(RouteList(routes))
     }
 }

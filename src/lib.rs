@@ -43,7 +43,7 @@
 //! - VehicleLocations
 
 extern crate hyper;
-extern crate kuchiki;
+extern crate xml;
 
 mod api;
 mod error;

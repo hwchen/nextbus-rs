@@ -13,7 +13,7 @@
 
 pub mod agency_list;
 pub mod route_list;
-//pub mod route_config;
+pub mod route_config;
 //pub mod predictions;
 //pub mod predictions_for_multi_stops;
 //pub mod schedule;
