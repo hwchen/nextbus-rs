@@ -4,7 +4,6 @@ use error::Error;
 use request::{Command, Request};
 use std::io::Read;
 use xml::reader::{EventReader, XmlEvent};
-use xml::name::OwnedName;
 
 /// List of Agencies. Maps directly from Nextbus
 /// response. Contains vec of routes.
@@ -40,13 +39,9 @@ impl AgencyListBuilder {
     pub fn get(self) -> ::Result<AgencyList> {
 
         // Make the request
-        let mut res = try!(Request::new()
+        let res = try!(Request::new()
             .command(Command::AgencyList)
             .send());
-
-        let mut body = String::new();
-        res.read_to_string(&mut body);
-        println!("{}", body);
 
         // Parse xml into agency list struct
         Self::from_xml(res)
@@ -56,11 +51,11 @@ impl AgencyListBuilder {
         // Vec for collecting agencies
         let mut agencies = vec![];
 
-        let mut parser = EventReader::new(input);
+        let parser = EventReader::new(input);
 
         for event in parser {
             match event {
-                Ok(XmlEvent::StartElement {name: name, attributes: attributes, ..}) => {
+                Ok(XmlEvent::StartElement {name, attributes, ..}) => {
                     if name.borrow().local_name == "agency" {
                         let mut tag = None ;
                         let mut title = None;
@@ -86,7 +81,6 @@ impl AgencyListBuilder {
                             title: try!(title.ok_or(Error::ParseError)),
                             short_title: short_title,
                             region_title: try!(region_title.ok_or(Error::ParseError)),
-
                         });
                     }
                 },
@@ -123,7 +117,7 @@ impl Agency {
 
 #[cfg(test)]
 mod test {
-    use std::io::{Cursor, Read};
+    use std::io::Cursor;
     use super::*;
 
     // test xml
@@ -181,21 +175,21 @@ mod test {
     #[should_panic]
     fn parse_bad_xml_missing_tag() {
         let buffer = Cursor::new(MISSING_TAG_AGENCY_XML);
-        let agencies = AgencyListBuilder::from_xml(buffer).unwrap();
+        AgencyListBuilder::from_xml(buffer).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn parse_bad_xml_missing_title() {
         let buffer = Cursor::new(MISSING_TITLE_AGENCY_XML);
-        let agencies = AgencyListBuilder::from_xml(buffer).unwrap();
+        AgencyListBuilder::from_xml(buffer).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn parse_bad_xml_missing_region_title() {
         let buffer = Cursor::new(MISSING_REGION_TITLE_AGENCY_XML);
-        let agencies = AgencyListBuilder::from_xml(buffer).unwrap();
+        AgencyListBuilder::from_xml(buffer).unwrap();
     }
 
     // Should simply skip over any extra attributes, no panic.
@@ -217,7 +211,6 @@ mod test {
     #[ignore]
     fn should_get_agencies() {
         let agencies = AgencyListBuilder::new().get().unwrap();
-        let AgencyList(agencies) = agencies;
         for agency in agencies {
             println!("agency");
             println!("{:?}\n", agency);
