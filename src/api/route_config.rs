@@ -120,14 +120,8 @@ impl<'a> RouteConfigBuilder<'a> {
                         }
 
                         // Now get stops for this route
-                        // The logic for matching:
-                        // - continue if it's a start element that's a stop
-                        // - break if it's a start element that's not a stop (and move on)
-                        // - break on error
-                        // - continue if it's any other event (whitespace, etc.)
                         let mut stops = Vec::new();
                         try!(parse_stops(&mut parser, &mut stops));
-                        // Finish stops
 
                         // Now get directions for this route
                         // The logic for matching:
@@ -257,9 +251,17 @@ pub struct Point {
 }
 
 // Helpers for parsing
+// ===============================================================
 
+// Parsing Stops
+// ===============================================================
 fn parse_stops<R: Read>(parser: &mut EventReader<R>,
                mut stops: &mut Vec<Stop>) -> ::Result<()> {
+    // The logic for matching:
+    // - continue if it's a start element that's a stop
+    // - break if it's a start element that's not a stop (and move on)
+    // - break on error
+    // - continue if it's any other event (whitespace, etc.)
     loop {
         match parser.next() {
             Ok(XmlEvent::StartElement {name, attributes, ..}) => {
@@ -312,6 +314,8 @@ fn add_stop_to_stops(attributes: Vec<OwnedAttribute>,
     Ok(())
 }
 
+// Parsing Directions
+// ===============================================================
 fn add_stop_to_direction(attributes: Vec<OwnedAttribute>,
                     stop_stubs: &mut Vec<StopStub>) -> ::Result<()> {
     Ok(())
