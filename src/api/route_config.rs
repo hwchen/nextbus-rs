@@ -87,103 +87,7 @@ impl<'a> RouteConfigBuilder<'a> {
                     if name.borrow().local_name == "body" { continue };
 
                     if name.borrow().local_name == "route" {
-                        // First, set the attributes for Route
-                        // Can't break this out, because before Route
-                        // is created, must also do Stops, Directions, Path.
-                        // And in order to call parser.next, It would have to 
-                        // be passed into the function for parseing routes.
-                        let mut tag = None ;
-                        let mut title = None;
-                        let mut color = None;
-                        let mut opposite_color = None;
-                        let mut lat_min: Option<f32> = None;
-                        let mut lat_max: Option<f32> = None;
-                        let mut lon_min: Option<f32> = None;
-                        let mut lon_max: Option<f32> = None;
-
-                        for attribute in attributes {
-                            let attribute = attribute.borrow();
-                            let name = attribute.name.local_name;
-                            let value = attribute.value;
-
-                            match name {
-                                "tag" => tag = Some(value.to_owned()),
-                                "title" => title = Some(value.to_owned()),
-                                "color" => color = Some(value.to_owned()),
-                                "oppositeColor" => opposite_color = Some(value.to_owned()),
-                                "latMin" => lat_min = Some(value.parse().unwrap()),
-                                "latMax" => lat_max = Some(value.parse().unwrap()),
-                                "lonMin" => lon_min = Some(value.parse().unwrap()),
-                                "lonMax" => lon_max = Some(value.parse().unwrap()),
-                                _ => (),
-                            };
-                        }
-
-                        // Now get stops for this route
-                        let mut stops = Vec::new();
-                        try!(parse_stops(&mut parser, &mut stops));
-
-                        // Now get directions for this route
-                        // The logic for matching:
-                        // - continue if it's a start element that's a stop
-                        // - break if it's a start element that's not a stop (and move on)
-                        // - break on error
-                        // - continue if it's any other event (whitespace, etc.)
-//                        let mut directions = Vec::new();
-//                        loop {
-//                            match parser.next() {
-//                                Ok(XmlEvent::StartElement {name, attributes, ..}) => {
-//                                    let name = name.borrow().local_name;
-//
-//                                    if name == "direction" {
-//                                        let tag = None;
-//                                        let title = None;
-//                                        let name = None;
-//                                        let userForUI: Option<bool> = None;
-//
-//                                        for attribute in attributes {
-//                                            let attribute = attribute.borrow();
-//                                            let name = attribute.name.local_name;
-//                                            let value = attribute.value;
-//
-//                                            match name {
-//                                                "tag" => tag = Some(value.to_owned()),
-//                                                "title" => title = Some(value.to_owned()),
-//                                                "color" => color = Some(value.to_owned()),
-//                                                "name" => name = Some(value.to_owned()),
-//                                                "useForUI" => use_for_ui = Some(value.parse().unwrap()),
-//                                                _ => (),
-//                                            };
-//                                        }
-//
-//
-//                                    } else if name == "stop" {
-//                                        try!(add_stop_to_direction(attributes, &mut stops));
-//                                    } else {
-//                                        break;
-//                                    }
-//                                },
-//                                Err(_) => break,
-//                                _ => continue,
-//                            }
-//                        }
-//                        // Finish direction
-
-                        // Set Route
-                        routes.push(Route{
-                            tag: try!(tag.ok_or(Error::ParseError)),
-                            title: try!(title.ok_or(Error::ParseError)),
-                            color: try!(color.ok_or(Error::ParseError)),
-                            opposite_color: try!(opposite_color.ok_or(Error::ParseError)),
-                            lat_min: try!(lat_min.ok_or(Error::ParseError)),
-                            lat_max: try!(lat_max.ok_or(Error::ParseError)),
-                            lon_min: try!(lon_min.ok_or(Error::ParseError)),
-                            lon_max: try!(lon_max.ok_or(Error::ParseError)),
-                            // temporary
-                            stops: stops,
-                            directions: vec![],
-                            paths: vec![],
-                        });
+                        try!(add_route_to_routes(&mut parser, attributes, &mut routes));
                     }
                 },
                 Ok(XmlEvent::EndDocument) => break,
@@ -250,13 +154,79 @@ pub struct Point {
     lon: f32,
 }
 
+// ===============================================================
 // Helpers for parsing
 // ===============================================================
 
-// Parsing Stops
+// Parsing a Route
 // ===============================================================
-fn parse_stops<R: Read>(parser: &mut EventReader<R>,
-               mut stops: &mut Vec<Stop>) -> ::Result<()> {
+
+fn add_route_to_routes<R: Read>(mut parser: &mut EventReader<R>,
+                                attributes: Vec<OwnedAttribute>,
+                                mut routes: &mut Vec<Route>) -> ::Result<()> {
+    let mut tag = None ;
+    let mut title = None;
+    let mut color = None;
+    let mut opposite_color = None;
+    let mut lat_min: Option<f32> = None;
+    let mut lat_max: Option<f32> = None;
+    let mut lon_min: Option<f32> = None;
+    let mut lon_max: Option<f32> = None;
+
+    for attribute in attributes {
+        let attribute = attribute.borrow();
+        let name = attribute.name.local_name;
+        let value = attribute.value;
+
+        match name {
+            "tag" => tag = Some(value.to_owned()),
+            "title" => title = Some(value.to_owned()),
+            "color" => color = Some(value.to_owned()),
+            "oppositeColor" => opposite_color = Some(value.to_owned()),
+            "latMin" => lat_min = Some(value.parse().unwrap()),
+            "latMax" => lat_max = Some(value.parse().unwrap()),
+            "lonMin" => lon_min = Some(value.parse().unwrap()),
+            "lonMax" => lon_max = Some(value.parse().unwrap()),
+            _ => (),
+        };
+    }
+
+    // Now get stops for this route
+    let mut stops = Vec::new();
+    let mut directions = Vec::new();
+    let mut paths = Vec::new();
+    try!(parse_route_elements(&mut parser, &mut stops, &mut directions, &mut paths));
+
+    // Set Route
+    routes.push(Route{
+        tag: try!(tag.ok_or(Error::ParseError)),
+        title: try!(title.ok_or(Error::ParseError)),
+        color: try!(color.ok_or(Error::ParseError)),
+        opposite_color: try!(opposite_color.ok_or(Error::ParseError)),
+        lat_min: try!(lat_min.ok_or(Error::ParseError)),
+        lat_max: try!(lat_max.ok_or(Error::ParseError)),
+        lon_min: try!(lon_min.ok_or(Error::ParseError)),
+        lon_max: try!(lon_max.ok_or(Error::ParseError)),
+        // temporary
+        stops: stops,
+        directions: directions,
+        paths: paths,
+    });
+
+    Ok(())
+}
+
+// Parsing route elements
+//
+// The reason all the elements (stops, directions, paths) are all
+// put together is that the parser doesn't have lookahead and there
+// is no end element for stops. So stops won't know when to end until
+// it hits a direction start tag.
+// ===============================================================
+fn parse_route_elements<R: Read>(parser: &mut EventReader<R>,
+                        mut stops: &mut Vec<Stop>,
+                        mut directions: &mut Vec<Direction>,
+                        mut paths: &mut Vec<Path>) -> ::Result<()> {
     // The logic for matching:
     // - continue if it's a start element that's a stop
     // - break if it's a start element that's not a stop (and move on)
@@ -279,7 +249,7 @@ fn parse_stops<R: Read>(parser: &mut EventReader<R>,
 }
 
 fn add_stop_to_stops(attributes: Vec<OwnedAttribute>,
-               stops: &mut Vec<Stop>) -> ::Result<()> {
+                     stops: &mut Vec<Stop>) -> ::Result<()> {
     let mut tag = None ;
     let mut title = None;
     let mut lat = None;
@@ -316,8 +286,75 @@ fn add_stop_to_stops(attributes: Vec<OwnedAttribute>,
 
 // Parsing Directions
 // ===============================================================
+fn parse_directions<R: Read>(parser: &mut EventReader<R>,
+                             mut stops: &mut Vec<Stop>) -> ::Result<()> {
+    // The logic for matching:
+    // - continue if it's a start element that's a stop
+    // - break if it's a start element that's not a stop (and move on)
+    // - break on error
+    // - continue if it's any other event (whitespace, etc.)
+    loop {
+        match parser.next() {
+            Ok(XmlEvent::StartElement {name, attributes, ..}) => {
+                if name.borrow().local_name == "direction" {
+                    try!(add_stop_to_stops(attributes, &mut stops));
+                } else {
+                    break;
+                }
+            },
+            Err(_) => break,
+            _ => continue,
+        }
+    }
+    Ok(())
+}
 fn add_stop_to_direction(attributes: Vec<OwnedAttribute>,
-                    stop_stubs: &mut Vec<StopStub>) -> ::Result<()> {
+                         stop_stubs: &mut Vec<StopStub>) -> ::Result<()> {
+                        // Now get directions for this route
+                        // The logic for matching:
+                        // - continue if it's a start element that's a stop
+                        // - break if it's a start element that's not a stop (and move on)
+                        // - break on error
+                        // - continue if it's any other event (whitespace, etc.)
+//                        let mut directions = Vec::new();
+//                        loop {
+//                            match parser.next() {
+//                                Ok(XmlEvent::StartElement {name, attributes, ..}) => {
+//                                    let name = name.borrow().local_name;
+//
+//                                    if name == "direction" {
+//                                        let tag = None;
+//                                        let title = None;
+//                                        let name = None;
+//                                        let userForUI: Option<bool> = None;
+//
+//                                        for attribute in attributes {
+//                                            let attribute = attribute.borrow();
+//                                            let name = attribute.name.local_name;
+//                                            let value = attribute.value;
+//
+//                                            match name {
+//                                                "tag" => tag = Some(value.to_owned()),
+//                                                "title" => title = Some(value.to_owned()),
+//                                                "color" => color = Some(value.to_owned()),
+//                                                "name" => name = Some(value.to_owned()),
+//                                                "useForUI" => use_for_ui = Some(value.parse().unwrap()),
+//                                                _ => (),
+//                                            };
+//                                        }
+//
+//
+//                                    } else if name == "stop" {
+//                                        try!(add_stop_to_direction(attributes, &mut stops));
+//                                    } else {
+//                                        break;
+//                                    }
+//                                },
+//                                Err(_) => break,
+//                                _ => continue,
+//                            }
+//                        }
+//                        // Finish direction
     Ok(())
 }
 #[cfg(test)]
