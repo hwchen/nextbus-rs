@@ -25,6 +25,19 @@ impl IntoIterator for AgencyList {
     }
 }
 
+impl<'a> IntoIterator for &'a AgencyList {
+    type Item = &'a Agency;
+    type IntoIter = ::std::slice::Iter<'a, Agency>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let &AgencyList(ref agencies) = self;
+        agencies.iter()
+    }
+}
+
+// Builder
+// ===============================================================
+
 /// Builds a request for AgencyList.
 /// Since there's no config, it's empty,
 /// but it's a consistent API with other commands.
@@ -92,6 +105,9 @@ impl AgencyListBuilder {
     }
 }
 
+// Components of AgencyList
+// ===============================================================
+
 #[derive(Debug, PartialEq)]
 pub struct Agency {
     tag: String,
@@ -114,6 +130,8 @@ impl Agency {
     }
 }
 
+// Tests
+// ===============================================================
 
 #[cfg(test)]
 mod test {

@@ -25,6 +25,19 @@ impl IntoIterator for RouteConfig {
     }
 }
 
+impl<'a> IntoIterator for &'a RouteConfig {
+    type Item = &'a Route;
+    type IntoIter = ::std::slice::Iter<'a, Route>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let &RouteConfig(ref routes) = self;
+        routes.iter()
+    }
+}
+
+// Builder
+// ===============================================================
+
 pub struct RouteConfigBuilder<'a> {
     agency: Option<&'a str>,
     route: Option<&'a str>,
@@ -101,6 +114,7 @@ impl<'a> RouteConfigBuilder<'a> {
 }
 
 // Components of RouteConfig
+// ===============================================================
 
 #[derive(Debug)]
 pub struct Route {
@@ -146,7 +160,7 @@ pub struct Direction {
 /// The coordinates tracing a Route
 #[derive(Debug)]
 pub struct Path {
-    tag: String,
+    tag: Option<String>,
     points: Vec<Point>,
 }
 
@@ -225,6 +239,7 @@ fn add_route_to_routes<R: Read>(mut parser: &mut EventReader<R>,
 // is no end element for stops. So stops won't know when to end until
 // it hits a direction start tag.
 // ===============================================================
+
 fn parse_route_elements<R: Read>(mut parser: &mut EventReader<R>,
                         mut stops: &mut Vec<Stop>,
                         mut directions: &mut Vec<Direction>,
@@ -307,6 +322,7 @@ fn add_stop_to_stops(attributes: Vec<OwnedAttribute>,
 
 // Parsing Direction
 // ===============================================================
+
 fn parse_direction<R: Read>(parser: &mut EventReader<R>,
                              attributes: Vec<OwnedAttribute>,
                              mut directions: &mut Vec<Direction>) -> ::Result<()> {
@@ -387,6 +403,7 @@ fn add_stop_to_direction(attributes: Vec<OwnedAttribute>,
 
 // Parsing Path
 // ===============================================================
+
 fn parse_path<R: Read>(parser: &mut EventReader<R>,
                        mut paths: &mut Vec<Path>) -> ::Result<()> {
     // put attributes of direction first
@@ -431,7 +448,7 @@ fn parse_path<R: Read>(parser: &mut EventReader<R>,
         }
     }
     paths.push(Path {
-        tag: try!(tag.ok_or(Error::ParseError)),
+        tag: tag,
         points: points,
     });
     Ok(())
@@ -460,12 +477,15 @@ fn add_point_to_path(attributes: Vec<OwnedAttribute>,
     Ok(())
 }
 
+// Tests
+// ===============================================================
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
-//    #[ignore]
+    #[ignore]
     fn should_get_one_route_config() {
         let routes = RouteConfigBuilder::new()
             .agency("mit")
@@ -480,16 +500,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+//    #[ignore]
     fn should_get_many_route_config() {
         let routes = RouteConfigBuilder::new()
-            .agency("mit")
+            .agency("moorpark")
             .get()
             .unwrap();
-        for route in routes {
+        for route in &routes {
             println!("{:?}", route);
             println!("\n");
         }
+        println!("Total number of routes: {}", routes.0.len());
         assert!(false);
     }
 }

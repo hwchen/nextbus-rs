@@ -26,6 +26,19 @@ impl IntoIterator for RouteList {
     }
 }
 
+impl<'a> IntoIterator for &'a RouteList {
+    type Item = &'a Route;
+    type IntoIter = ::std::slice::Iter<'a, Route>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let &RouteList(ref routes) = self;
+        routes.iter()
+    }
+}
+
+// Builder
+// ===============================================================
+
 pub struct RouteListBuilder<'a> {
     agency: Option<&'a str>,
 }
@@ -97,6 +110,9 @@ impl<'a> RouteListBuilder<'a> {
     }
 }
 
+// Components of RouteList
+// ===============================================================
+
 /// Used for parsing RouteList Nextbus response.
 #[derive(Debug, PartialEq)]
 pub struct Route {
@@ -114,6 +130,9 @@ impl Route {
         }
     }
 }
+
+// Tests
+// ===============================================================
 
 #[cfg(test)]
 mod test {
