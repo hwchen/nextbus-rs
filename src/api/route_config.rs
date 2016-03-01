@@ -1,6 +1,8 @@
 //! Next Bus Route List Command
 //!
 
+//TODO: add "terse" option for no path
+
 use error::Error;
 use request::{Command, Request};
 use std::io::Read;
@@ -41,6 +43,7 @@ impl<'a> IntoIterator for &'a RouteConfig {
 pub struct RouteConfigBuilder<'a> {
     agency: Option<&'a str>,
     route: Option<&'a str>,
+    terse: bool,
 }
 
 impl<'a> RouteConfigBuilder<'a> {
@@ -48,6 +51,7 @@ impl<'a> RouteConfigBuilder<'a> {
         RouteConfigBuilder {
             agency: None,
             route: None,
+            terse: false,
         }
     }
 
@@ -63,11 +67,18 @@ impl<'a> RouteConfigBuilder<'a> {
         self
     }
 
+    /// Builder to set route
+    pub fn terse(&mut self) -> &mut Self {
+        self.terse = true;
+        self
+    }
+
     pub fn get(&self) -> ::Result<RouteConfig> {
         // Check if agency or route is none. If so, send error.
         let agency = try!(self.agency.ok_or(Error::BuildCommandError));
 
         // Request. Allow one route or no route param (returns all routes)
+        // TODO: add the terse option here
         let res = match self.route {
             Some(route) => {
                 try!(Request::new()
@@ -500,7 +511,7 @@ mod test {
     }
 
     #[test]
-//    #[ignore]
+    #[ignore]
     fn should_get_many_route_config() {
         let routes = RouteConfigBuilder::new()
             .agency("moorpark")
