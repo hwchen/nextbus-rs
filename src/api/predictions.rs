@@ -93,7 +93,7 @@ impl<'a> PredictionsBuilder<'a> {
             .stop(stop)
             .send());
 
-        // Parse xml into route list struct
+        // Parse xml into predictions struct
         Self::from_xml(res)
     }
 
@@ -383,7 +383,7 @@ fn add_message_to_messages(attributes: Vec<OwnedAttribute>,
 
 #[cfg(test)]
 mod test {
-    use std::io::Cursor;
+//    use std::io::Cursor;
     use super::*;
 
 //    #[test]

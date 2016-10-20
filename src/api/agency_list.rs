@@ -3,7 +3,7 @@
 use error::Error;
 use request::{Command, Request};
 use std::io::Read;
-use xml::reader::{EventReader, XmlEvent};
+use rquery::Document;
 
 /// List of Agencies. Maps directly from Nextbus
 /// response. Contains vec of routes.
@@ -30,8 +30,7 @@ impl<'a> IntoIterator for &'a AgencyList {
     type IntoIter = ::std::slice::Iter<'a, Agency>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let &AgencyList(ref agencies) = self;
-        agencies.iter()
+        self.0.iter()
     }
 }
 
@@ -61,44 +60,20 @@ impl AgencyListBuilder {
     }
 
     fn from_xml<R: Read>(input: R) -> ::Result<AgencyList> {
-        // Vec for collecting agencies
         let mut agencies = vec![];
+        // TODO ask rquery lib to expose documentError for conversion (elim unwraps);
+        let document = Document::new_from_xml_stream(input).unwrap();
 
-        let parser = EventReader::new(input);
-
-        for event in parser {
-            match event {
-                Ok(XmlEvent::StartElement {name, attributes, ..}) => {
-                    if name.borrow().local_name == "agency" {
-                        let mut tag = None ;
-                        let mut title = None;
-                        let mut short_title = None;
-                        let mut region_title = None;
-
-                        for attribute in attributes {
-                            let attribute = attribute.borrow();
-                            let name = attribute.name.local_name;
-                            let value = attribute.value;
-
-                            match name {
-                                "tag" => tag = Some(value.to_owned()),
-                                "title" => title = Some(value.to_owned()),
-                                "shortTitle" => short_title = Some(value.to_owned()),
-                                "regionTitle" =>  region_title = Some(value.to_owned()),
-                                _ => (),
-                            };
-                        }
-
-                        agencies.push(Agency{
-                            tag: try!(tag.ok_or(Error::ParseError)),
-                            title: try!(title.ok_or(Error::ParseError)),
-                            short_title: short_title,
-                            region_title: try!(region_title.ok_or(Error::ParseError)),
-                        });
-                    }
-                },
-                _ => (),
-            }
+        // can't use iterator and collect because of error handling?
+        // can't try inside of map?
+        let selected_agencies = document.select_all("agency").unwrap();
+        for agency in selected_agencies {
+            agencies.push(Agency{
+                tag: agency.attr("tag").cloned().ok_or(Error::ParseError)?,
+                title: agency.attr("title").cloned().ok_or(Error::ParseError)?,
+                short_title: agency.attr("shortTitle").cloned(),
+                region_title: agency.attr("regionTitle").cloned().ok_or(Error::ParseError)?,
+            });
         }
 
         Ok(AgencyList(agencies))

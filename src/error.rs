@@ -4,7 +4,6 @@ use std::error;
 use std::fmt;
 use hyper::error::Error as HyperError;
 
-
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 
@@ -50,6 +49,12 @@ impl From<HyperError> for Error {
         Error::HttpError(err)
     }
 }
+
+//impl From<DocumentError> for Error {
+//    fn from(err: DocumentError) -> Error {
+//        Error::IoError(err)
+//    }
+//}
 
 // Create an enum just for builder errors, to get more granular errors.
 // Then pass these into the normal error! Maybe do this later

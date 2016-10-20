@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(question_mark)]
 // TODO: Definitely take out verfication from url builder. It no longer needs it,
 // since building is already constrained by individual builders.
 //
@@ -10,9 +11,9 @@
 // TODO: Maybe take out builder methods later from url builder, and just
 // build inline. But don't have to do this until later.
 //
-// TODO: Review .select() in kuchiki?
-//
 // TODO: Remove BuildUrlError?
+//
+// TODO: ask for pub error for rquery?
 
 //! NextBus
 //! Rust API for NextBus API
@@ -43,6 +44,7 @@
 //! - VehicleLocations
 
 extern crate hyper;
+extern crate rquery;
 extern crate xml;
 
 mod api;

@@ -1,0 +1,87 @@
+<route tag="saferidecampshut" title="Saferide Campus Shuttle" shortTitle="SR Camp Shuttle" color="ffdab9" oppositeColor="000000" latMin="42.3548299" latMax="42.3631649" lonMin="-71.1025997" lonMax="-71.084632">
+    <stop tag="mass84_d" title="84 Mass Ave" shortTitle="84 Mass" lat="42.35952" lon="-71.09416" stopId="03"/>
+    <stop tag="amhekres" title="Amherst at Kresge" shortTitle="Amherst @ Kresge" lat="42.3578818" lon="-71.0941195"/>
+    <stop tag="burthous" title="Burton House" lat="42.3560824" lon="-71.0987027" stopId="16"/>
+    <stop tag="tangwest" title="Tang/Westgate" lat="42.3548299" lon="-71.1025997" stopId="51"/>
+    <stop tag="simmhall" title="Simmons Hall" lat="42.3565968" lon="-71.1020453" stopId="47"/>
+    <stop tag="zcent" title="Z-Center" lat="42.3591597" lon="-71.0968304"/>
+    <stop tag="edge" title="Edgerton" lat="42.360202" lon="-71.097526" stopId="23"/>
+    <stop tag="albapaci" title="Albany at Pacific" shortTitle="Albany @ Pacific" lat="42.3591086" lon="-71.1002972"/>
+    <stop tag="paci70" title="70 Pacific Street" shortTitle="70 Pacific" lat="42.360289" lon="-71.1022783" stopId="39"/>
+    <stop tag="masssydn" title="Mass Ave at Sydney" shortTitle="Mass @ Sydney" lat="42.3628754" lon="-71.0994671"/>
+    <stop tag="mainwinds" title="Main St at Windsor" shortTitle="Main @ Windsor" lat="42.3631649" lon="-71.0964565" stopId="27"/>
+    <stop tag="mainkoch" title="Main at Koch" shortTitle="Main @ Koch" lat="42.3626409" lon="-71.0896225"/>
+    <stop tag="kendsq" title="Kendall Square T" lat="42.362378" lon="-71.0862329" stopId="01"/>
+    <stop tag="amhewads" title="Amherst at Wadsworth" shortTitle="Amherst @ Wadsworth" lat="42.3610459" lon="-71.084632" stopId="07"/>
+    <stop tag="medilab" title="Media Lab" lat="42.36032" lon="-71.0868599" stopId="60"/>
+    <stop tag="mass77" title="77 Mass Ave" shortTitle="77 Mass" lat="42.3592716" lon="-71.0936817" stopId="02"/>
+    <direction tag="kendsq" title="To Kendall Square" name="" useForUI="true">
+        <stop tag="simmhall" />
+        <stop tag="zcent" />
+        <stop tag="edge" />
+        <stop tag="albapaci" />
+        <stop tag="paci70" />
+        <stop tag="masssydn" />
+        <stop tag="mainwinds" />
+        <stop tag="mainkoch" />
+    </direction>
+    <direction tag="mass84" title="To 84 Mass Ave" name="" useForUI="true">
+        <stop tag="kendsq" />
+        <stop tag="amhewads" />
+        <stop tag="medilab" />
+        <stop tag="mass77" />
+    </direction>
+    <direction tag="wcamp" title="To West Campus" name="" useForUI="true">
+        <stop tag="mass84_d" />
+        <stop tag="amhekres" />
+        <stop tag="burthous" />
+        <stop tag="tangwest" />
+    </direction>
+    <path>
+        <tag id="saferidecampshut_kendsq_mass77"/>
+        <point lat="42.362378" lon="-71.0862329"/>
+        <point lat="42.3623199" lon="-71.0854899"/>
+        <point lat="42.3623" lon="-71.08523"/>
+        <point lat="42.36227" lon="-71.08484"/>
+        <point lat="42.36226" lon="-71.08467"/>
+        <point lat="42.3622299" lon="-71.08441"/>
+        <point lat="42.3622" lon="-71.08433"/>
+        <point lat="42.3621399" lon="-71.08429"/>
+        <point lat="42.36206" lon="-71.08429"/>
+        <point lat="42.36194" lon="-71.0843"/>
+        <point lat="42.36145" lon="-71.08437"/>
+        <point lat="42.36127" lon="-71.08439"/>
+        <point lat="42.36121" lon="-71.0844"/>
+        <point lat="42.36116" lon="-71.08442"/>
+        <point lat="42.3611099" lon="-71.08447"/>
+        <point lat="42.36108" lon="-71.08453"/>
+        <point lat="42.36104" lon="-71.08465"/>
+        <point lat="42.36078" lon="-71.08543"/>
+        <point lat="42.36045" lon="-71.08644"/>
+        <point lat="42.36032" lon="-71.08686"/>
+        <point lat="42.36012" lon="-71.08748"/>
+        <point lat="42.3601" lon="-71.08754"/>
+        <point lat="42.36007" lon="-71.08763"/>
+        <point lat="42.36002" lon="-71.08768"/>
+        <point lat="42.3599699" lon="-71.0877"/>
+        <point lat="42.35991" lon="-71.08769"/>
+        <point lat="42.3594" lon="-71.08735"/>
+        <point lat="42.35933" lon="-71.08732"/>
+        <point lat="42.35924" lon="-71.08734"/>
+        <point lat="42.35917" lon="-71.08741"/>
+        <point lat="42.35805" lon="-71.09075"/>
+        <point lat="42.35799" lon="-71.09092"/>
+        <point lat="42.35792" lon="-71.09113"/>
+        <point lat="42.3578" lon="-71.09144"/>
+        <point lat="42.3575" lon="-71.09232"/>
+        <point lat="42.35747" lon="-71.09244"/>
+        <point lat="42.357451" lon="-71.092527"/>
+        <point lat="42.3574569" lon="-71.092591"/>
+        <point lat="42.357474" lon="-71.092639"/>
+        <point lat="42.3575" lon="-71.09267"/>
+        <point lat="42.35819" lon="-71.093"/>
+        <point lat="42.35851" lon="-71.09315"/>
+        <point lat="42.35895" lon="-71.09341"/>
+    </path>
+</route>
+

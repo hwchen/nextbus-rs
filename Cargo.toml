@@ -6,4 +6,5 @@ version = "0.1.0"
 
 [dependencies]
 hyper = "0.6.16"
-xml-rs = "0.3.0"
+rquery = "0.3.0"
+xml-rs = "0.3.4"
