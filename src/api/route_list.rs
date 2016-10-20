@@ -3,7 +3,7 @@
 use error::Error;
 use request::{Command, Request};
 use std::io::Read;
-use xml::reader::{EventReader, XmlEvent};
+use rquery::Document;
 
 
 /// List of routes. Maps directly from Nextbus response.
@@ -31,8 +31,7 @@ impl<'a> IntoIterator for &'a RouteList {
     type IntoIter = ::std::slice::Iter<'a, Route>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let &RouteList(ref routes) = self;
-        routes.iter()
+        self.0.iter()
     }
 }
 
@@ -69,41 +68,19 @@ impl<'a> RouteListBuilder<'a> {
     }
 
     fn from_xml<R: Read>(input: R) -> ::Result<RouteList> {
-        // Vec for collecting routes
         let mut routes = vec![];
+        // TODO ask rquery lib to expose documentError for conversion (elim unwraps);
+        let document = Document::new_from_xml_stream(input).unwrap();
 
-        let parser = EventReader::new(input);
-
-        for event in parser {
-            match event {
-                Ok(XmlEvent::StartElement {name, attributes, ..}) => {
-                    if name.borrow().local_name == "route" {
-                        let mut tag = None ;
-                        let mut title = None;
-                        let mut short_title = None;
-
-                        for attribute in attributes {
-                            let attribute = attribute.borrow();
-                            let name = attribute.name.local_name;
-                            let value = attribute.value;
-
-                            match name {
-                                "tag" => tag = Some(value.to_owned()),
-                                "title" => title = Some(value.to_owned()),
-                                "shortTitle" => short_title = Some(value.to_owned()),
-                                _ => (),
-                            };
-                        }
-
-                        routes.push(Route{
-                            tag: try!(tag.ok_or(Error::ParseError)),
-                            title: try!(title.ok_or(Error::ParseError)),
-                            short_title: short_title,
-                        });
-                    }
-                },
-                _ => (),
-            }
+        // can't use iterator and collect because of error handling?
+        // can't try inside of map?
+        let selected_routes = document.select_all("route").unwrap();
+        for route in selected_routes {
+            routes.push(Route{
+                tag: route.attr("tag").cloned().ok_or(Error::ParseError)?,
+                title: route.attr("title").cloned().ok_or(Error::ParseError)?,
+                short_title: route.attr("shortTitle").cloned(),
+            });
         }
 
         Ok(RouteList(routes))
