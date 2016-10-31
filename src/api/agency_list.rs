@@ -61,18 +61,17 @@ impl AgencyListBuilder {
 
     fn from_xml<R: Read>(input: R) -> ::Result<AgencyList> {
         let mut agencies = vec![];
-        // TODO ask rquery lib to expose documentError for conversion (elim unwraps);
-        let document = Document::new_from_xml_stream(input).unwrap();
 
-        // can't use iterator and collect because of error handling?
-        // can't try inside of map?
-        let selected_agencies = document.select_all("agency").unwrap();
+        let document = Document::new_from_xml_stream(input)?;
+
+        // Allocate vec first?
+        let selected_agencies = document.select_all("agency")?;
         for agency in selected_agencies {
             agencies.push(Agency{
-                tag: agency.attr("tag").cloned().ok_or(Error::ParseError)?,
-                title: agency.attr("title").cloned().ok_or(Error::ParseError)?,
+                tag: agency.attr("tag").ok_or(Error::ParseError)?.clone(),
+                title: agency.attr("title").ok_or(Error::ParseError)?.clone(),
                 short_title: agency.attr("shortTitle").cloned(),
-                region_title: agency.attr("regionTitle").cloned().ok_or(Error::ParseError)?,
+                region_title: agency.attr("regionTitle").ok_or(Error::ParseError)?.clone(),
             });
         }
 

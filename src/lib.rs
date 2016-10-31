@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-#![feature(question_mark)]
 // TODO: Definitely take out verfication from url builder. It no longer needs it,
 // since building is already constrained by individual builders.
 //
@@ -69,31 +68,5 @@ impl<'a> NextBus {
 
     pub fn route_list(self) -> RouteListBuilder<'a> {
         RouteListBuilder::new()
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    #[ignore]
-    fn get_agency_list() {
-        let agencies = NextBus::new()
-            .agency_list()
-            .get()
-            .unwrap();
-        println!("{:?}", agencies);
-    }
-
-    #[test]
-    #[ignore]
-    fn get_route_list() {
-        let routes = NextBus::new()
-            .route_list()
-            .agency("mbta")
-            .get()
-            .unwrap();
-        println!("{:?}", routes);
     }
 }
