@@ -68,17 +68,15 @@ impl<'a> RouteListBuilder<'a> {
     }
 
     fn from_xml<R: Read>(input: R) -> ::Result<RouteList> {
-        let mut routes = vec![];
-        // TODO ask rquery lib to expose documentError for conversion (elim unwraps);
-        let document = Document::new_from_xml_stream(input).unwrap();
+        let document = Document::new_from_xml_stream(input)?;
+        let selected_routes = document.select_all("route")?;
 
-        // can't use iterator and collect because of error handling?
-        // can't try inside of map?
-        let selected_routes = document.select_all("route").unwrap();
+        let mut routes = vec![];
+
         for route in selected_routes {
             routes.push(Route{
-                tag: route.attr("tag").cloned().ok_or(Error::ParseError)?,
-                title: route.attr("title").cloned().ok_or(Error::ParseError)?,
+                tag: route.attr("tag").ok_or(Error::ParseError)?.clone(),
+                title: route.attr("title").ok_or(Error::ParseError)?.clone(),
                 short_title: route.attr("shortTitle").cloned(),
             });
         }

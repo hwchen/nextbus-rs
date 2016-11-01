@@ -60,12 +60,11 @@ impl AgencyListBuilder {
     }
 
     fn from_xml<R: Read>(input: R) -> ::Result<AgencyList> {
+        let document = Document::new_from_xml_stream(input)?;
+        let selected_agencies = document.select_all("agency")?;
+
         let mut agencies = vec![];
 
-        let document = Document::new_from_xml_stream(input)?;
-
-        // Allocate vec first?
-        let selected_agencies = document.select_all("agency")?;
         for agency in selected_agencies {
             agencies.push(Agency{
                 tag: agency.attr("tag").ok_or(Error::ParseError)?.clone(),
